@@ -70,7 +70,7 @@ object ParCorr {
     xs.sliding(ws, bw).map(_.sum)
 
   private def slidingStats(xs: Array[Float], ws: Int, bw: Int) =
-    slidingSums(xs, ws, bw).zip(slidingSums(xs.map(pow(_,2)), ws, bw))
+    (slidingSums(xs, ws, bw) zip slidingSums(xs.map(pow(_,2)), ws, bw))
       .map( t=> (t._1/ws, sqrt(t._2/ws - pow(t._1/ws, 2)).toFloat)).toArray
 
   private def inputRDD(sc: SparkContext, cmd: CommandLine) = {
@@ -183,7 +183,7 @@ object ParCorr {
 
     val dataWithStats = inputRDD(sc, cmd).map(t => (t._1, t._2, slidingStats(t._2, ws, bw)))
 
-    dataWithStats.cache()
+    dataWithStats.persist(StorageLevel.MEMORY_AND_DISK_SER)
 
     val sizeData = dataWithStats.first()._2.length
     val RandMx = if ( rmfile == "" ) ranD(sizeSketches, sizeData) else readRmFile(rmfile, sizeData)
